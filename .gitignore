@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# expo
+.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+
+# native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# env
+.env
+.env.local
+*.local
+
+# build output
+dist/
+build/
+
+# os
+.DS_Store
+
+# logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea/
