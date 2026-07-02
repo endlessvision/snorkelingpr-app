@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { StyleSheet } from "react-native";
+import { DimensionValue, StyleSheet } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -11,8 +11,8 @@ import Animated, {
 import { tideEasing } from "@/theme/tokens";
 
 interface Props {
-  left: number;
-  top: number;
+  left: DimensionValue;
+  top: DimensionValue;
   size?: number;
   /** How far the bubble rises before looping back, in px. */
   rise?: number;
