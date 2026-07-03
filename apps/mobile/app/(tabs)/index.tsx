@@ -11,14 +11,18 @@ import Animated, {
   withDelay,
   withTiming,
 } from "react-native-reanimated";
-import { DEFAULT_ECONOMY, depthZoneForFt, DepthZoneName, MaskId, OwnedMasks } from "@snorkeling/shared";
+import { COIN_BUBBLE_DEFS, depthZoneForFt, DepthZoneName } from "@snorkeling/shared";
 import { HomeReveal } from "@/components/HomeReveal";
 import { CoinPill } from "@/components/CoinPill";
 import { Text } from "@/components/Text";
 import { fontLabel } from "@/theme/fonts";
+import { useEconomy } from "@/store/useEconomy";
+import { coinBubbleValue } from "@/features/gear/perks";
 import { OceanWorld, WORLD_HEIGHT, WORLD_WIDTH } from "@/features/dive/OceanWorld";
 import { DepthGauge } from "@/features/dive/DepthGauge";
 import { RedeemSheet } from "@/features/redeem/RedeemSheet";
+import { CoinShop } from "@/features/redeem/CoinShop";
+import { GearLocker } from "@/features/gear/GearLocker";
 import { CoinRushOverlay } from "@/features/minigames/coin-rush/CoinRushOverlay";
 import { LuckyReelsOverlay } from "@/features/minigames/lucky-reels/LuckyReelsOverlay";
 import { DepthGambleOverlay } from "@/features/minigames/depth-gamble/DepthGambleOverlay";
@@ -36,21 +40,28 @@ function clamp(value: number, min: number, max: number) {
 }
 
 export default function DiveScreen() {
+  const coins = useEconomy((s) => s.coins);
+  const gear = useEconomy((s) => s.gear);
+  const masks = useEconomy((s) => s.masks);
+  const collectedList = useEconomy((s) => s.collectedCoinBubbles);
+  const earnCoins = useEconomy((s) => s.earnCoins);
+  const spendCoins = useEconomy((s) => s.spendCoins);
+  const unlockMask = useEconomy((s) => s.unlockMask);
+  const collectCoinBubble = useEconomy((s) => s.collectCoinBubble);
+
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
-  const [coins, setCoins] = useState(0);
-  const [ownedMasks, setOwnedMasks] = useState<OwnedMasks>(DEFAULT_ECONOMY.masks);
-  const [collected, setCollected] = useState<Record<string, boolean>>({});
   const [bursts, setBursts] = useState<Burst[]>([]);
   const [toast, setToast] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
+  const [gearOpen, setGearOpen] = useState(false);
   const [coinRushOpen, setCoinRushOpen] = useState(false);
   const [reelsOpen, setReelsOpen] = useState(false);
   const [depthGambleOpen, setDepthGambleOpen] = useState(false);
   const [ft, setFt] = useState(0);
   const [zone, setZone] = useState<DepthZoneName>("Surface");
 
-  const coinsRef = useRef(0);
-  coinsRef.current = coins;
+  const collected = useCollectedMap(collectedList);
 
   const burstIdRef = useRef(0);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -124,32 +135,21 @@ export default function DiveScreen() {
   );
 
   const handleCollect = useCallback(
-    (id: string, left: number, top: number, value: number) => {
-      setCollected((prev) => (prev[id] ? prev : { ...prev, [id]: true }));
-      setCoins((c) => c + value);
+    (id: string, left: number, top: number, _value: number) => {
+      const def = COIN_BUBBLE_DEFS.find((c) => c.id === id);
+      if (!def) return;
+      const value = coinBubbleValue(gear, def.value);
+      collectCoinBubble(id);
+      earnCoins(value);
       const burstId = ++burstIdRef.current;
       setBursts((prev) => [...prev, { id: burstId, left, top, value }]);
       showToast(`+${value} coins collected!`);
     },
-    [showToast],
+    [gear, collectCoinBubble, earnCoins, showToast],
   );
 
   const handleBurstDone = useCallback((id: number) => {
     setBursts((prev) => prev.filter((b) => b.id !== id));
-  }, []);
-
-  const earnCoins = useCallback((amount: number) => {
-    setCoins((c) => c + amount);
-  }, []);
-
-  const spendCoins = useCallback((amount: number) => {
-    if (coinsRef.current < amount) return false;
-    setCoins((c) => c - amount);
-    return true;
-  }, []);
-
-  const unlockMask = useCallback((id: MaskId) => {
-    setOwnedMasks((prev) => ({ ...prev, [id]: true }));
   }, []);
 
   return (
@@ -184,10 +184,7 @@ export default function DiveScreen() {
               ⚡ Coin Rush
             </Text>
           </Pressable>
-          <Pressable
-            onPress={() => showToast("Gear locker arrives in Phase 5!")}
-            style={[styles.pillBtn, { top: 140 }]}
-          >
+          <Pressable onPress={() => setGearOpen(true)} style={[styles.pillBtn, { top: 140 }]}>
             <Text style={styles.pillBtnLabel} color="#bfefff">
               🤿 Gear
             </Text>
@@ -213,18 +210,22 @@ export default function DiveScreen() {
         onClose={() => setSheetOpen(false)}
         onOpenReels={() => setReelsOpen(true)}
         onOpenDepthGamble={() => setDepthGambleOpen(true)}
-        onStub={showToast}
+        onOpenShop={() => setShopOpen(true)}
       />
+
+      <CoinShop visible={shopOpen} onClose={() => setShopOpen(false)} onToast={showToast} />
+      <GearLocker visible={gearOpen} onClose={() => setGearOpen(false)} />
 
       <CoinRushOverlay
         visible={coinRushOpen}
+        gear={gear}
         onClose={() => setCoinRushOpen(false)}
         onEarnCoins={earnCoins}
       />
       <LuckyReelsOverlay
         visible={reelsOpen}
         coins={coins}
-        ownedMasks={ownedMasks}
+        ownedMasks={masks}
         onClose={() => setReelsOpen(false)}
         onSpendCoins={spendCoins}
         onEarnCoins={earnCoins}
@@ -239,6 +240,15 @@ export default function DiveScreen() {
       />
     </View>
   );
+}
+
+/** Memo-ish helper: turn the collected-id list into the map OceanWorld expects. */
+function useCollectedMap(list: string[]): Record<string, boolean> {
+  const ref = useRef<{ list: string[]; map: Record<string, boolean> }>({ list: [], map: {} });
+  if (ref.current.list !== list) {
+    ref.current = { list, map: Object.fromEntries(list.map((id) => [id, true])) };
+  }
+  return ref.current.map;
 }
 
 const styles = StyleSheet.create({

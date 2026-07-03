@@ -13,8 +13,7 @@ interface Props {
   onClose: () => void;
   onOpenReels: () => void;
   onOpenDepthGamble: () => void;
-  /** Coin Shop stub — real perks land in Phase 5. */
-  onStub: (msg: string) => void;
+  onOpenShop: () => void;
 }
 
 const ROWS = [
@@ -24,7 +23,7 @@ const ROWS = [
 ] as const;
 
 /** Bottom sheet reached from the Dive HUD's 🎁 Redeem button — ports the prototype's Treasure Shop sheet. */
-export function RedeemSheet({ visible, coins, onClose, onOpenReels, onOpenDepthGamble, onStub }: Props) {
+export function RedeemSheet({ visible, coins, onClose, onOpenReels, onOpenDepthGamble, onOpenShop }: Props) {
   const progress = useSharedValue(0);
   // Keep the sheet mounted through its slide-out, then unmount.
   const [mounted, setMounted] = useState(visible);
@@ -68,7 +67,7 @@ export function RedeemSheet({ visible, coins, onClose, onOpenReels, onOpenDepthG
               onClose();
               if (row.key === "reels") onOpenReels();
               else if (row.key === "depth") onOpenDepthGamble();
-              else onStub(`${row.title} arrives soon!`);
+              else onOpenShop();
             }}
           >
             <LinearGradient

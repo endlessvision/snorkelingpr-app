@@ -1,25 +1,36 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LayoutChangeEvent, Modal, Pressable, StyleSheet, View } from "react-native";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { EquippedGear } from "@snorkeling/shared";
 import { CoinIcon } from "@/svg/CoinIcon";
 import { Text } from "@/components/Text";
 import { Button } from "@/components/Button";
 import { fontDisplay, fontLabel } from "@/theme/fonts";
+import {
+  coinRushCatchBase,
+  coinRushCoinMultiplier,
+  coinRushDurationMs,
+  coinRushFlagBonus,
+  coinRushRareBoost,
+  urchinsAreHarmless,
+} from "@/features/gear/perks";
 import { CoinRushEntity, CoinRushEntityData, EntityType } from "./CoinRushEntity";
 
 interface Props {
   visible: boolean;
+  gear: EquippedGear;
   onClose: () => void;
   onEarnCoins: (amount: number) => void;
 }
 
-// Round length is fixed for now — the Sunray Fins perk (+5s) wires in once
-// Gear (Phase 5) exists.
-const DURATION_MS = 30_000;
-
 let nextId = 1;
 
-export function CoinRushOverlay({ visible, onClose, onEarnCoins }: Props) {
+export function CoinRushOverlay({ visible, gear, onClose, onEarnCoins }: Props) {
+  // Perks (Sunray +5s, Reef Blue urchin immunity, Diver Down +5, Explorer/
+  // Alpha rare boost, Fortune/Coral/Aqua coin math) come from the equipped gear.
+  const durationMs = coinRushDurationMs(gear);
+  const gearRef = useRef(gear);
+  gearRef.current = gear;
   const [phase, setPhase] = useState<"ready" | "playing" | "over">("ready");
   const [entities, setEntities] = useState<CoinRushEntityData[]>([]);
   const [score, setScore] = useState(0);
@@ -33,6 +44,7 @@ export function CoinRushOverlay({ visible, onClose, onEarnCoins }: Props) {
   const bestMultRef = useRef(1);
   const comboRef = useRef(0);
   const scoreRef = useRef(0);
+  const roundDurationRef = useRef(durationMs);
   const viewport = useRef({ w: 375, h: 700 });
   const spawnTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const endTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,12 +71,12 @@ export function CoinRushOverlay({ visible, onClose, onEarnCoins }: Props) {
 
   const spawnOne = useCallback(() => {
     const elapsed = Date.now() - startedAt.current;
-    const prog = Math.min(1, elapsed / DURATION_MS);
+    const prog = Math.min(1, elapsed / roundDurationRef.current);
     const { w, h } = viewport.current;
 
     const r = Math.random();
     let type: EntityType = "coin";
-    const rareBoost = 0.32; // Explorer mask / Alpha flag raise this in Phase 5
+    const rareBoost = coinRushRareBoost(gearRef.current);
     if (r < 0.1 + 0.1 * prog) type = "urchin";
     else if (r < rareBoost + 0.1 * prog) type = "gem";
 
@@ -86,7 +98,7 @@ export function CoinRushOverlay({ visible, onClose, onEarnCoins }: Props) {
   const scheduleSpawn = useCallback(() => {
     if (!activeRef.current) return;
     const elapsed = Date.now() - startedAt.current;
-    const prog = Math.min(1, elapsed / DURATION_MS);
+    const prog = Math.min(1, elapsed / roundDurationRef.current);
     spawnOne();
     if (prog > 0.5 && Math.random() < 0.4) spawnOne();
 
@@ -97,6 +109,7 @@ export function CoinRushOverlay({ visible, onClose, onEarnCoins }: Props) {
   const startGame = useCallback(() => {
     clearTimers();
     activeRef.current = true;
+    roundDurationRef.current = coinRushDurationMs(gearRef.current);
     setEntities([]);
     setScore(0);
     setCombo(0);
@@ -104,23 +117,23 @@ export function CoinRushOverlay({ visible, onClose, onEarnCoins }: Props) {
     comboRef.current = 0;
     bestComboRef.current = 0;
     bestMultRef.current = 1;
-    setTimeLeft(30);
+    setTimeLeft(Math.round(roundDurationRef.current / 1000));
     startedAt.current = Date.now();
     setPhase("playing");
 
     spawnTimer.current = setTimeout(scheduleSpawn, 120);
     tickTimer.current = setInterval(() => {
-      const remaining = Math.max(0, DURATION_MS - (Date.now() - startedAt.current));
+      const remaining = Math.max(0, roundDurationRef.current - (Date.now() - startedAt.current));
       setTimeLeft(Math.ceil(remaining / 1000));
     }, 200);
-    endTimer.current = setTimeout(() => endGame(), DURATION_MS);
+    endTimer.current = setTimeout(() => endGame(), roundDurationRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheduleSpawn, clearTimers]);
 
   const endGame = useCallback(() => {
     clearTimers();
     setEntities([]);
-    const gained = scoreRef.current; // Diver Down Flag +5 bonus wires in Phase 5
+    const gained = scoreRef.current + coinRushFlagBonus(gearRef.current);
     setFinalCoins(gained);
     setBestMultShown(bestMultRef.current);
     onEarnCoins(gained);
@@ -147,6 +160,8 @@ export function CoinRushOverlay({ visible, onClose, onEarnCoins }: Props) {
     (data: CoinRushEntityData) => {
       removeEntity(data.id);
       if (data.type === "urchin") {
+        // Reef Blue Suit makes urchins harmless (they just vanish).
+        if (urchinsAreHarmless(gearRef.current)) return;
         comboRef.current = 0;
         setCombo(0);
         scoreRef.current = Math.max(0, scoreRef.current - 5);
@@ -158,7 +173,9 @@ export function CoinRushOverlay({ visible, onClose, onEarnCoins }: Props) {
       const mult = Math.min(5, 1 + Math.floor((comboRef.current - 1) / 3));
       if (comboRef.current > bestComboRef.current) bestComboRef.current = comboRef.current;
       if (mult > bestMultRef.current) bestMultRef.current = mult;
-      const gain = Math.round(data.value * mult);
+      // Aqua Fins (+1 on coins), Fortune Mask (x1.5), Coral Fins (x1.1).
+      const base = coinRushCatchBase(gearRef.current, data.type, data.value);
+      const gain = Math.round(base * mult * coinRushCoinMultiplier(gearRef.current));
       scoreRef.current += gain;
       setScore(scoreRef.current);
       setCombo(comboRef.current);
