@@ -46,6 +46,13 @@ export default function SightingScreen() {
     if (discovered) router.replace(`/species/${discovered.id}`);
   }, [discovered, router]);
 
+  // Dismiss back to the reef. Falls back to the home route when there's no
+  // back-stack (e.g. the app was cold-opened directly onto this screen).
+  const dismiss = useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/");
+  }, [router]);
+
   return (
     <PhoneSafeArea gradient={{ colors: ["#0a4f70", "#0a3a5c"] }}>
       <View style={styles.center}>
@@ -61,7 +68,7 @@ export default function SightingScreen() {
             <Text variant="body" color="rgba(255,255,255,0.82)" style={styles.desc}>
               Your Ocean Passport is complete. Keep diving for coins and gear.
             </Text>
-            <Button label="Back to the reef" onPress={() => router.back()} />
+            <Button label="Back to the reef" onPress={dismiss} />
           </>
         ) : discovered ? (
           <>
@@ -78,7 +85,7 @@ export default function SightingScreen() {
             </View>
             <View style={styles.buttons}>
               <Button label="See its card" onPress={viewSpecies} />
-              <Button label="Done" onPress={() => router.back()} variant="glass" />
+              <Button label="Done" onPress={dismiss} variant="glass" />
             </View>
           </>
         ) : null}

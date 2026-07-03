@@ -37,7 +37,8 @@ export type EconomyStore = EconomyState & EconomyActions;
 
 export const useEconomy = create<EconomyStore>((set, get) => ({
   ...DEFAULT_ECONOMY,
-  hydrated: true,
+  // Flipped to true by hydrate() once the persisted state has loaded.
+  hydrated: false,
 
   earnCoins: (amount) => set((s) => ({ coins: s.coins + Math.max(0, Math.round(amount)) })),
 

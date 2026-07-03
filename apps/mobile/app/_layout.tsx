@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -7,12 +7,18 @@ import { StatusBar } from "expo-status-bar";
 import { useAppFonts } from "@/theme/fonts";
 import { SplashOverlay } from "@/components/SplashOverlay";
 import { Text } from "@/components/Text";
+import { initEconomyPersistence } from "@/store/persistence";
 
 export default function RootLayout() {
   const [fontsLoaded] = useAppFonts();
   const [showSplash, setShowSplash] = useState(true);
   const hideSplash = useCallback(() => setShowSplash(false), []);
   const replay = useCallback(() => setShowSplash(true), []);
+
+  // Load the saved economy while the ~2.8s splash plays.
+  useEffect(() => {
+    void initEconomyPersistence();
+  }, []);
 
   if (!fontsLoaded) {
     return <View style={styles.blank} />;

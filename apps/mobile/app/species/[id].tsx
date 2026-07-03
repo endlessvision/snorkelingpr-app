@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { Text } from "@/components/Text";
 import { MarineCreature } from "@/svg/MarineCreature";
 import { fontBody, fontDisplay, fontLabel } from "@/theme/fonts";
@@ -18,6 +18,12 @@ export default function SpeciesCard() {
   const insets = useSafeAreaInsets();
   const species = typeof id === "string" ? speciesById(id) : undefined;
 
+  // Fall back to the Collection when there's no back-stack (deep-linked in).
+  const goBack = useCallback(() => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/collect");
+  }, [router]);
+
   const sway = useSharedValue(0);
   useEffect(() => {
     sway.value = withRepeat(withTiming(1, { duration: 4500, easing: Easing.inOut(Easing.ease) }), -1, true);
@@ -30,7 +36,7 @@ export default function SpeciesCard() {
     return (
       <View style={[styles.missing, { paddingTop: insets.top }]}>
         <Text variant="display">Species not found</Text>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={goBack}>
           <Text variant="body" color="#16c0d8">
             Go back
           </Text>
@@ -45,7 +51,7 @@ export default function SpeciesCard() {
         {/* hero */}
         <LinearGradient colors={[species.gradient[0], species.gradient[1], "#0a6e7e"]} style={[styles.hero, { paddingTop: insets.top }]}>
           <View style={styles.heroBar}>
-            <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Pressable onPress={goBack} style={styles.backBtn}>
               <Text style={styles.backGlyph}>‹</Text>
             </Pressable>
             <Text style={styles.heart}>♡</Text>
