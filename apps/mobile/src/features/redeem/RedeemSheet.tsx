@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { CoinPill } from "@/components/CoinPill";
 import { Text } from "@/components/Text";
 import { fontDisplay, fontLabel } from "@/theme/fonts";
@@ -11,7 +11,9 @@ interface Props {
   visible: boolean;
   coins: number;
   onClose: () => void;
-  /** Phase 3 stub — Lucky Reels/Depth Gamble/Coin Shop land in Phase 4-5. */
+  onOpenReels: () => void;
+  onOpenDepthGamble: () => void;
+  /** Coin Shop stub — real perks land in Phase 5. */
   onStub: (msg: string) => void;
 }
 
@@ -22,11 +24,20 @@ const ROWS = [
 ] as const;
 
 /** Bottom sheet reached from the Dive HUD's 🎁 Redeem button — ports the prototype's Treasure Shop sheet. */
-export function RedeemSheet({ visible, coins, onClose, onStub }: Props) {
+export function RedeemSheet({ visible, coins, onClose, onOpenReels, onOpenDepthGamble, onStub }: Props) {
   const progress = useSharedValue(0);
+  // Keep the sheet mounted through its slide-out, then unmount.
+  const [mounted, setMounted] = useState(visible);
 
   useEffect(() => {
-    progress.value = withTiming(visible ? 1 : 0, { duration: 320, easing: Easing.bezier(0.22, 1, 0.36, 1) });
+    if (visible) setMounted(true);
+    progress.value = withTiming(
+      visible ? 1 : 0,
+      { duration: 320, easing: Easing.bezier(0.22, 1, 0.36, 1) },
+      (finished) => {
+        if (finished && !visible) runOnJS(setMounted)(false);
+      },
+    );
   }, [visible, progress]);
 
   const backdropStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
@@ -34,7 +45,7 @@ export function RedeemSheet({ visible, coins, onClose, onStub }: Props) {
     transform: [{ translateY: (1 - progress.value) * 400 }],
   }));
 
-  if (!visible && progress.value === 0) return null;
+  if (!mounted) return null;
 
   return (
     <View style={styles.overlay} pointerEvents={visible ? "auto" : "none"}>
@@ -55,7 +66,9 @@ export function RedeemSheet({ visible, coins, onClose, onStub }: Props) {
             key={row.key}
             onPress={() => {
               onClose();
-              onStub(`${row.title} arrives soon!`);
+              if (row.key === "reels") onOpenReels();
+              else if (row.key === "depth") onOpenDepthGamble();
+              else onStub(`${row.title} arrives soon!`);
             }}
           >
             <LinearGradient

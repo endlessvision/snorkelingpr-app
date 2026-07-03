@@ -11,7 +11,7 @@ import Animated, {
   withDelay,
   withTiming,
 } from "react-native-reanimated";
-import { depthZoneForFt, DepthZoneName } from "@snorkeling/shared";
+import { DEFAULT_ECONOMY, depthZoneForFt, DepthZoneName, MaskId, OwnedMasks } from "@snorkeling/shared";
 import { HomeReveal } from "@/components/HomeReveal";
 import { CoinPill } from "@/components/CoinPill";
 import { Text } from "@/components/Text";
@@ -19,6 +19,9 @@ import { fontLabel } from "@/theme/fonts";
 import { OceanWorld, WORLD_HEIGHT, WORLD_WIDTH } from "@/features/dive/OceanWorld";
 import { DepthGauge } from "@/features/dive/DepthGauge";
 import { RedeemSheet } from "@/features/redeem/RedeemSheet";
+import { CoinRushOverlay } from "@/features/minigames/coin-rush/CoinRushOverlay";
+import { LuckyReelsOverlay } from "@/features/minigames/lucky-reels/LuckyReelsOverlay";
+import { DepthGambleOverlay } from "@/features/minigames/depth-gamble/DepthGambleOverlay";
 
 interface Burst {
   id: number;
@@ -35,12 +38,19 @@ function clamp(value: number, min: number, max: number) {
 export default function DiveScreen() {
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
   const [coins, setCoins] = useState(0);
+  const [ownedMasks, setOwnedMasks] = useState<OwnedMasks>(DEFAULT_ECONOMY.masks);
   const [collected, setCollected] = useState<Record<string, boolean>>({});
   const [bursts, setBursts] = useState<Burst[]>([]);
   const [toast, setToast] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [coinRushOpen, setCoinRushOpen] = useState(false);
+  const [reelsOpen, setReelsOpen] = useState(false);
+  const [depthGambleOpen, setDepthGambleOpen] = useState(false);
   const [ft, setFt] = useState(0);
   const [zone, setZone] = useState<DepthZoneName>("Surface");
+
+  const coinsRef = useRef(0);
+  coinsRef.current = coins;
 
   const burstIdRef = useRef(0);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -128,6 +138,20 @@ export default function DiveScreen() {
     setBursts((prev) => prev.filter((b) => b.id !== id));
   }, []);
 
+  const earnCoins = useCallback((amount: number) => {
+    setCoins((c) => c + amount);
+  }, []);
+
+  const spendCoins = useCallback((amount: number) => {
+    if (coinsRef.current < amount) return false;
+    setCoins((c) => c - amount);
+    return true;
+  }, []);
+
+  const unlockMask = useCallback((id: MaskId) => {
+    setOwnedMasks((prev) => ({ ...prev, [id]: true }));
+  }, []);
+
   return (
     <View style={styles.fill} onLayout={onLayout}>
       <HomeReveal>
@@ -155,10 +179,7 @@ export default function DiveScreen() {
             </Pressable>
           </View>
 
-          <Pressable
-            onPress={() => showToast("Coin Rush arrives in Phase 4!")}
-            style={[styles.pillBtn, { top: 100 }]}
-          >
+          <Pressable onPress={() => setCoinRushOpen(true)} style={[styles.pillBtn, { top: 100 }]}>
             <Text style={styles.pillBtnLabel} color="#ffe58a">
               ⚡ Coin Rush
             </Text>
@@ -186,7 +207,36 @@ export default function DiveScreen() {
         </View>
       </HomeReveal>
 
-      <RedeemSheet visible={sheetOpen} coins={coins} onClose={() => setSheetOpen(false)} onStub={showToast} />
+      <RedeemSheet
+        visible={sheetOpen}
+        coins={coins}
+        onClose={() => setSheetOpen(false)}
+        onOpenReels={() => setReelsOpen(true)}
+        onOpenDepthGamble={() => setDepthGambleOpen(true)}
+        onStub={showToast}
+      />
+
+      <CoinRushOverlay
+        visible={coinRushOpen}
+        onClose={() => setCoinRushOpen(false)}
+        onEarnCoins={earnCoins}
+      />
+      <LuckyReelsOverlay
+        visible={reelsOpen}
+        coins={coins}
+        ownedMasks={ownedMasks}
+        onClose={() => setReelsOpen(false)}
+        onSpendCoins={spendCoins}
+        onEarnCoins={earnCoins}
+        onUnlockMask={unlockMask}
+      />
+      <DepthGambleOverlay
+        visible={depthGambleOpen}
+        coins={coins}
+        onClose={() => setDepthGambleOpen(false)}
+        onSpendCoins={spendCoins}
+        onEarnCoins={earnCoins}
+      />
     </View>
   );
 }
