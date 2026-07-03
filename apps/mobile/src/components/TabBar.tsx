@@ -68,7 +68,7 @@ export function TabBar({ state, navigation }: Props) {
     <View style={styles.bar}>
       {left.map(renderItem)}
       <Pressable
-        onPress={() => router.push("/")}
+        onPress={() => router.push("/sighting")}
         style={styles.fabWrap}
         hitSlop={8}
         accessibilityLabel="Register a sighting"
