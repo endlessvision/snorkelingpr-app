@@ -69,23 +69,65 @@ export interface Species {
   foundAt: string[];
 }
 
+/** XP earned in the current ISO week — drives the weekly leaderboard (Phase 9). */
+export interface WeekXp {
+  /** ISO-ish week key, e.g. "2026-w27". */
+  week: string;
+  xp: number;
+}
+
+/** Daily-claim streak state (Phase 4). `last` is a "YYYY-MM-DD" date string. */
+export interface Streak {
+  count: number;
+  last: string;
+}
+
+/** Monthly raffle entries (Phase 8). Resets when the month key changes. */
+export interface Raffle {
+  /** Month key, e.g. "2026-7". */
+  month: string;
+  entries: number;
+}
+
 /** The whole persisted local economy — see packages/shared as the single source of truth for its shape. */
 export interface EconomyState {
   coins: number;
+  /** Lifetime XP — drives the Diver tier (Phase 3). */
+  xp: number;
+  /** XP earned this ISO week — drives the leaderboard (Phase 9). */
+  weekXp: WeekXp;
   gear: EquippedGear;
   masks: OwnedMasks;
   redeemedShopItems: string[];
   collectedCoinBubbles: string[];
+  /** Ocean gem (XP) bubbles popped (Phase 2). */
+  poppedGems: string[];
+  /** Species added to the collection (the handoff's "logged" set). */
   unlockedSpeciesIds: string[];
+  /** Consecutive daily-claim streak (Phase 4). */
+  streak: Streak;
+  /** Unused free Lucky Reels spins (Phase 4 → Phase 6). */
+  freeSpins: number;
+  /** Raffle tickets for the current month (Phase 8). */
+  raffle: Raffle;
+  /** Sound muted toggle (Phase 5). */
+  muted: boolean;
 }
 
 export const DEFAULT_ECONOMY: EconomyState = {
   coins: 0,
+  xp: 0,
+  weekXp: { week: "", xp: 0 },
   gear: { mask: null, fins: null, suit: null, flag: null },
   masks: { explorer: false, fortune: false, voyager: false },
   redeemedShopItems: [],
   collectedCoinBubbles: [],
+  poppedGems: [],
   unlockedSpeciesIds: [],
+  streak: { count: 0, last: "" },
+  freeSpins: 0,
+  raffle: { month: "", entries: 0 },
+  muted: false,
 };
 
 // ===== Static catalogs (ported from Snorkeling Dive.dc.html) =====

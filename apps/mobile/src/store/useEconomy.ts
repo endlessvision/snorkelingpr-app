@@ -6,7 +6,9 @@ import {
   GearId,
   MaskId,
   SHOP_ITEM_DEFS,
+  Streak,
 } from "@snorkeling/shared";
+import { currentMonthKey, currentWeekKey } from "@/lib/periods";
 
 export type RedeemResult = "ok" | "insufficient" | "already";
 
@@ -19,14 +21,32 @@ interface EconomyActions {
   /** Returns false (and does nothing) if the balance can't cover it. */
   spendCoins: (amount: number) => boolean;
 
+  /** Add XP to lifetime `xp` AND the current week's `weekXp` (rolls over on a new
+   *  ISO week). Tier-up handling lands in Phase 3. */
+  addXp: (amount: number) => void;
+
+  /** Grant free Lucky Reels spins (Phase 4). */
+  grantFreeSpin: (n?: number) => void;
+  /** Consume one free spin; returns false if none available. */
+  consumeFreeSpin: () => boolean;
+
   /** Equip an item, or unequip it if it's already the equipped one. */
   toggleGear: (category: GearCategory, id: GearId) => void;
   unlockMask: (id: MaskId) => void;
 
   collectCoinBubble: (id: string) => void;
+  /** Mark an ocean gem (XP) bubble popped (Phase 2). The caller awards the XP via addXp. */
+  popGem: (id: string) => void;
   unlockSpecies: (id: string) => void;
 
   redeemShopItem: (key: string) => RedeemResult;
+
+  /** Set the daily streak (Phase 4). */
+  setStreak: (streak: Streak) => void;
+  /** Add raffle entries for the current month, rolling over on a new month (Phase 8). */
+  addRaffleEntries: (n: number) => void;
+  /** Toggle the muted flag (Phase 5). */
+  toggleMuted: () => void;
 
   /** Replace the whole economy — used by the persistence layer on load (Phase 7). */
   hydrate: (state: Partial<EconomyState>) => void;
@@ -49,6 +69,24 @@ export const useEconomy = create<EconomyStore>((set, get) => ({
     return true;
   },
 
+  addXp: (amount) =>
+    set((s) => {
+      const n = Math.max(0, Math.round(amount));
+      const week = currentWeekKey();
+      const weekXp =
+        s.weekXp.week === week ? { week, xp: s.weekXp.xp + n } : { week, xp: n };
+      return { xp: s.xp + n, weekXp };
+    }),
+
+  grantFreeSpin: (n = 1) =>
+    set((s) => ({ freeSpins: s.freeSpins + Math.max(0, Math.round(n)) })),
+
+  consumeFreeSpin: () => {
+    if (get().freeSpins <= 0) return false;
+    set((s) => ({ freeSpins: s.freeSpins - 1 }));
+    return true;
+  },
+
   toggleGear: (category, id) =>
     set((s) => ({
       gear: { ...s.gear, [category]: s.gear[category] === id ? null : id },
@@ -62,6 +100,9 @@ export const useEconomy = create<EconomyStore>((set, get) => ({
         ? s
         : { collectedCoinBubbles: [...s.collectedCoinBubbles, id] },
     ),
+
+  popGem: (id) =>
+    set((s) => (s.poppedGems.includes(id) ? s : { poppedGems: [...s.poppedGems, id] })),
 
   unlockSpecies: (id) =>
     set((s) =>
@@ -83,6 +124,18 @@ export const useEconomy = create<EconomyStore>((set, get) => ({
     }));
     return "ok";
   },
+
+  setStreak: (streak) => set({ streak }),
+
+  addRaffleEntries: (n) =>
+    set((s) => {
+      const add = Math.max(0, Math.round(n));
+      const month = currentMonthKey();
+      const entries = s.raffle.month === month ? s.raffle.entries + add : add;
+      return { raffle: { month, entries } };
+    }),
+
+  toggleMuted: () => set((s) => ({ muted: !s.muted })),
 
   hydrate: (state) => set((s) => ({ ...s, ...state, hydrated: true })),
   reset: () => set({ ...DEFAULT_ECONOMY }),
