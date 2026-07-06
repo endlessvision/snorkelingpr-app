@@ -18,17 +18,13 @@ import { CoinPill } from "@/components/CoinPill";
 import { Text } from "@/components/Text";
 import { fontLabel } from "@/theme/fonts";
 import { useEconomy } from "@/store/useEconomy";
+import { useUI } from "@/store/useUI";
 import { coinBubbleValue } from "@/features/gear/perks";
 import { OceanWorld, WORLD_HEIGHT, WORLD_WIDTH } from "@/features/dive/OceanWorld";
 import { DepthGauge } from "@/features/dive/DepthGauge";
 import { TierBadge } from "@/features/tiers/TierBadge";
 import { TierOverlay } from "@/features/tiers/TierOverlay";
 import { RedeemSheet } from "@/features/redeem/RedeemSheet";
-import { CoinShop } from "@/features/redeem/CoinShop";
-import { GearLocker } from "@/features/gear/GearLocker";
-import { CoinRushOverlay } from "@/features/minigames/coin-rush/CoinRushOverlay";
-import { LuckyReelsOverlay } from "@/features/minigames/lucky-reels/LuckyReelsOverlay";
-import { DepthGambleOverlay } from "@/features/minigames/depth-gamble/DepthGambleOverlay";
 
 interface Burst {
   id: number;
@@ -46,25 +42,18 @@ function clamp(value: number, min: number, max: number) {
 export default function DiveScreen() {
   const coins = useEconomy((s) => s.coins);
   const gear = useEconomy((s) => s.gear);
-  const masks = useEconomy((s) => s.masks);
   const collectedList = useEconomy((s) => s.collectedCoinBubbles);
   const poppedGemsList = useEconomy((s) => s.poppedGems);
   const earnCoins = useEconomy((s) => s.earnCoins);
   const addXp = useEconomy((s) => s.addXp);
-  const spendCoins = useEconomy((s) => s.spendCoins);
-  const unlockMask = useEconomy((s) => s.unlockMask);
   const collectCoinBubble = useEconomy((s) => s.collectCoinBubble);
   const popGem = useEconomy((s) => s.popGem);
+  const openScreen = useUI((s) => s.open);
 
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
   const [bursts, setBursts] = useState<Burst[]>([]);
   const [toast, setToast] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [shopOpen, setShopOpen] = useState(false);
-  const [gearOpen, setGearOpen] = useState(false);
-  const [coinRushOpen, setCoinRushOpen] = useState(false);
-  const [reelsOpen, setReelsOpen] = useState(false);
-  const [depthGambleOpen, setDepthGambleOpen] = useState(false);
   const [tierOpen, setTierOpen] = useState(false);
   const [ft, setFt] = useState(0);
   const [zone, setZone] = useState<DepthZoneName>("Surface");
@@ -207,17 +196,6 @@ export default function DiveScreen() {
             <TierBadge onPress={() => setTierOpen(true)} />
           </View>
 
-          <Pressable onPress={() => setCoinRushOpen(true)} style={[styles.pillBtn, { top: 156 }]}>
-            <Text style={styles.pillBtnLabel} color="#ffe58a">
-              ⚡ Coin Rush
-            </Text>
-          </Pressable>
-          <Pressable onPress={() => setGearOpen(true)} style={[styles.pillBtn, { top: 200 }]}>
-            <Text style={styles.pillBtnLabel} color="#bfefff">
-              🤿 Gear
-            </Text>
-          </Pressable>
-
           <DepthGauge progress={progress} ft={ft} zone={zone} />
 
           {!!toast && (
@@ -232,41 +210,8 @@ export default function DiveScreen() {
         </View>
       </HomeReveal>
 
-      <RedeemSheet
-        visible={sheetOpen}
-        coins={coins}
-        onClose={() => setSheetOpen(false)}
-        onOpenReels={() => setReelsOpen(true)}
-        onOpenDepthGamble={() => setDepthGambleOpen(true)}
-        onOpenShop={() => setShopOpen(true)}
-      />
-
-      <CoinShop visible={shopOpen} onClose={() => setShopOpen(false)} onToast={showToast} />
-      <GearLocker visible={gearOpen} onClose={() => setGearOpen(false)} />
+      <RedeemSheet visible={sheetOpen} coins={coins} onClose={() => setSheetOpen(false)} />
       <TierOverlay visible={tierOpen} onClose={() => setTierOpen(false)} />
-
-      <CoinRushOverlay
-        visible={coinRushOpen}
-        gear={gear}
-        onClose={() => setCoinRushOpen(false)}
-        onEarnCoins={earnCoins}
-      />
-      <LuckyReelsOverlay
-        visible={reelsOpen}
-        coins={coins}
-        ownedMasks={masks}
-        onClose={() => setReelsOpen(false)}
-        onSpendCoins={spendCoins}
-        onEarnCoins={earnCoins}
-        onUnlockMask={unlockMask}
-      />
-      <DepthGambleOverlay
-        visible={depthGambleOpen}
-        coins={coins}
-        onClose={() => setDepthGambleOpen(false)}
-        onSpendCoins={spendCoins}
-        onEarnCoins={earnCoins}
-      />
     </View>
   );
 }

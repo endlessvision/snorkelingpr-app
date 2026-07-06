@@ -7,15 +7,13 @@ import { Text } from "@/components/Text";
 import { fontDisplay, fontLabel } from "@/theme/fonts";
 import { radius, theme } from "@/theme/tokens";
 import { useEconomy } from "@/store/useEconomy";
+import { useUI } from "@/store/useUI";
 import { DailyDiveCard } from "@/features/streak/DailyDiveCard";
 
 interface Props {
   visible: boolean;
   coins: number;
   onClose: () => void;
-  onOpenReels: () => void;
-  onOpenDepthGamble: () => void;
-  onOpenShop: () => void;
 }
 
 const ROWS = [
@@ -25,7 +23,8 @@ const ROWS = [
 ] as const;
 
 /** Bottom sheet reached from the Dive HUD's 🎁 Redeem button — ports the prototype's Treasure Shop sheet. */
-export function RedeemSheet({ visible, coins, onClose, onOpenReels, onOpenDepthGamble, onOpenShop }: Props) {
+export function RedeemSheet({ visible, coins, onClose }: Props) {
+  const openScreen = useUI((s) => s.open);
   const freeSpins = useEconomy((s) => s.freeSpins);
   const progress = useSharedValue(0);
   // Keep the sheet mounted through its slide-out, then unmount.
@@ -83,9 +82,9 @@ export function RedeemSheet({ visible, coins, onClose, onOpenReels, onOpenDepthG
               key={row.key}
               onPress={() => {
                 onClose();
-                if (row.key === "reels") onOpenReels();
-                else if (row.key === "depth") onOpenDepthGamble();
-                else onOpenShop();
+                if (row.key === "reels") openScreen("luckyReels");
+                else if (row.key === "depth") openScreen("depthGamble");
+                else openScreen("coinShop");
               }}
             >
               <LinearGradient

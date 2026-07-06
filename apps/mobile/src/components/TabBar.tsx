@@ -1,12 +1,14 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { useEffect } from "react";
 import { TurtleIcon } from "@/svg/TurtleIcon";
 import { StarIcon } from "@/svg/StarIcon";
 import { Text } from "./Text";
 import { shadow } from "@/theme/tokens";
 import { fontDisplay, fontLabel } from "@/theme/fonts";
 import { minTouchTarget } from "@/theme/tokens";
+import { useUI } from "@/store/useUI";
 
 const ACTIVE = "#16C0D8";
 const INACTIVE = "#B9C8CF";
@@ -42,10 +44,17 @@ interface Props {
 
 /** Custom floating tab bar matching the prototype: Dive, Collect, [+ FAB], Passport, Shop. */
 export function TabBar({ state, navigation }: Props) {
-  const router = useRouter();
+  const actionMenuOpen = useUI((s) => s.actionMenuOpen);
+  const toggleActionMenu = useUI((s) => s.toggleActionMenu);
   const routes = state.routes;
   const left = routes.slice(0, 2);
   const right = routes.slice(2);
+
+  const rotate = useSharedValue(0);
+  useEffect(() => {
+    rotate.value = withTiming(actionMenuOpen ? 1 : 0, { duration: 220 });
+  }, [actionMenuOpen, rotate]);
+  const plusStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${rotate.value * 45}deg` }] }));
 
   const renderItem = (route: RouteLike) => {
     const isFocused = state.routes[state.index]?.key === route.key;
@@ -68,13 +77,13 @@ export function TabBar({ state, navigation }: Props) {
     <View style={styles.bar}>
       {left.map(renderItem)}
       <Pressable
-        onPress={() => router.push("/sighting")}
+        onPress={toggleActionMenu}
         style={styles.fabWrap}
         hitSlop={8}
-        accessibilityLabel="Register a sighting"
+        accessibilityLabel="Dive tools"
       >
         <LinearGradient colors={["#FF5BB0", "#FF2E93"]} style={[styles.fab, shadow.ctaPink]}>
-          <Text style={styles.fabPlus}>+</Text>
+          <Animated.Text style={[styles.fabPlus, plusStyle]}>+</Animated.Text>
         </LinearGradient>
       </Pressable>
       {right.map(renderItem)}

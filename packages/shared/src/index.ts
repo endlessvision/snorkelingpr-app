@@ -263,3 +263,16 @@ export const DAILY_REWARDS = [5, 10, 15, 20, 30, 40, 60];
 
 /** XP granted per daily claim. */
 export const DAILY_CLAIM_XP = 15;
+
+// ===== Log a sighting (Phase 5) =====
+
+/** Coin AND XP reward for logging a species, by rarity. */
+export const SIGHTING_REWARDS: Record<Species["rarity"], number> = {
+  common: 10,
+  uncommon: 20,
+  rare: 40,
+};
+
+/** The Puerto Rico dive sites a sighting can be logged at. */
+export const DIVE_SITES = ["Icacos", "Vieques", "Palomino"] as const;
+export type DiveSite = (typeof DIVE_SITES)[number];
