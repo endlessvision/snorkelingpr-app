@@ -48,6 +48,8 @@ interface EconomyActions {
   unlockSpecies: (id: string) => void;
 
   redeemShopItem: (key: string) => RedeemResult;
+  /** Mark a shop item redeemed for free (won as a prize). Returns false if already owned. */
+  grantRedemption: (key: string) => boolean;
 
   /** Set the daily streak (Phase 4). */
   setStreak: (streak: Streak) => void;
@@ -168,6 +170,12 @@ export const useEconomy = create<EconomyStore>((set, get) => ({
     }),
 
   toggleMuted: () => set((s) => ({ muted: !s.muted })),
+
+  grantRedemption: (key) => {
+    if (get().redeemedShopItems.includes(key)) return false;
+    set((s) => ({ redeemedShopItems: [...s.redeemedShopItems, key] }));
+    return true;
+  },
 
   hydrate: (state) => set((s) => ({ ...s, ...state, hydrated: true })),
   reset: () => set({ ...DEFAULT_ECONOMY }),

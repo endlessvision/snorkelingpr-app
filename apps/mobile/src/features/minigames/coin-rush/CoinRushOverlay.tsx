@@ -21,11 +21,15 @@ interface Props {
   gear: EquippedGear;
   onClose: () => void;
   onEarnCoins: (amount: number) => void;
+  /** Flat XP awarded at the end of a round (Phase 6). */
+  onAddXp: (amount: number) => void;
 }
 
 let nextId = 1;
 
-export function CoinRushOverlay({ visible, gear, onClose, onEarnCoins }: Props) {
+const END_XP = 5;
+
+export function CoinRushOverlay({ visible, gear, onClose, onEarnCoins, onAddXp }: Props) {
   // Perks (Sunray +5s, Reef Blue urchin immunity, Diver Down +5, Explorer/
   // Alpha rare boost, Fortune/Coral/Aqua coin math) come from the equipped gear.
   const durationMs = coinRushDurationMs(gear);
@@ -137,9 +141,10 @@ export function CoinRushOverlay({ visible, gear, onClose, onEarnCoins }: Props) 
     setFinalCoins(gained);
     setBestMultShown(bestMultRef.current);
     onEarnCoins(gained);
+    onAddXp(END_XP);
     setPhase("over");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clearTimers, onEarnCoins]);
+  }, [clearTimers, onEarnCoins, onAddXp]);
 
   const flash = useCallback(() => {
     flashOpacity.value = 1;

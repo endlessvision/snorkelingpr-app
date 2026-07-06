@@ -8,6 +8,8 @@ export type OverlayScreen =
   | "coinRush"
   | "depthGamble"
   | "luckyReels"
+  | "wheelOfTides"
+  | "scratchSand"
   | "coinShop"
   | "raffle"
   | "leaderboard";

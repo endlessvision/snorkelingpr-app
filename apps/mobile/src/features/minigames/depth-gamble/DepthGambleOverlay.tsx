@@ -25,10 +25,14 @@ interface Props {
   onClose: () => void;
   onSpendCoins: (amount: number) => boolean;
   onEarnCoins: (amount: number) => void;
+  /** XP awarded when the player banks a pot (Phase 6). */
+  onAddXp: (amount: number) => void;
 }
 
+const CASHOUT_XP = 8;
+
 /** Reached from the Redeem sheet — ports the Depth Gamble double-or-nothing descent. */
-export function DepthGambleOverlay({ visible, coins, onClose, onSpendCoins, onEarnCoins }: Props) {
+export function DepthGambleOverlay({ visible, coins, onClose, onSpendCoins, onEarnCoins, onAddXp }: Props) {
   const [stage, setStage] = useState<Stage>("bet");
   const [bet, setBet] = useState(25);
   const [level, setLevel] = useState(0);
@@ -93,9 +97,10 @@ export function DepthGambleOverlay({ visible, coins, onClose, onSpendCoins, onEa
   const cashOut = useCallback(() => {
     if (resolving) return;
     onEarnCoins(pot);
+    onAddXp(CASHOUT_XP);
     setResult(pot);
     setStage("cashed");
-  }, [resolving, pot, onEarnCoins]);
+  }, [resolving, pot, onEarnCoins, onAddXp]);
 
   const playAgain = useCallback(() => {
     if (resolveTimer.current) clearTimeout(resolveTimer.current);

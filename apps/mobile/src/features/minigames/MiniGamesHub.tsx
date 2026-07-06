@@ -17,11 +17,12 @@ interface GameRow {
   tag?: "free" | "reels";
 }
 
-// Phase 5 ships the three existing games; Phase 6 appends Wheel of Tides + Scratch.
 const GAMES: GameRow[] = [
   { key: "coinRush", emoji: "⚡", title: "Coin Rush", desc: "Tap rising bubbles against the clock · earn coins", bg: "rgba(255,229,138,0.12)", border: "rgba(255,229,138,0.3)", tag: "free" },
   { key: "luckyReels", emoji: "🎰", title: "Lucky Reels", desc: "Match masks that boost your dives · 15 coins", bg: "rgba(255,46,147,0.14)", border: "rgba(255,46,147,0.32)", tag: "reels" },
   { key: "depthGamble", emoji: "🎲", title: "Depth Gamble", desc: "Bet & descend · cash out before the deep takes it", bg: "rgba(22,192,216,0.13)", border: "rgba(22,192,216,0.32)" },
+  { key: "wheelOfTides", emoji: "🎡", title: "Wheel of Tides", desc: "Cheap spin · coins, gear or a rare discount · 8 coins", bg: "rgba(31,157,107,0.14)", border: "rgba(95,211,160,0.32)" },
+  { key: "scratchSand", emoji: "🏖️", title: "Scratch-the-Sand", desc: "Rub the sand off · match 3 to win · 12 coins", bg: "rgba(244,201,61,0.14)", border: "rgba(244,201,61,0.34)" },
 ];
 
 /** The Mini Games hub — opened from the + action menu. Shares the one economy. */

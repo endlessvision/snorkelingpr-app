@@ -7,6 +7,8 @@ import { MiniGamesHub } from "@/features/minigames/MiniGamesHub";
 import { CoinRushOverlay } from "@/features/minigames/coin-rush/CoinRushOverlay";
 import { LuckyReelsOverlay } from "@/features/minigames/lucky-reels/LuckyReelsOverlay";
 import { DepthGambleOverlay } from "@/features/minigames/depth-gamble/DepthGambleOverlay";
+import { WheelOfTides } from "@/features/minigames/wheel/WheelOfTides";
+import { ScratchTheSand } from "@/features/minigames/scratch/ScratchTheSand";
 import { CoinShop } from "@/features/redeem/CoinShop";
 import { GlobalToast } from "./GlobalToast";
 
@@ -27,6 +29,7 @@ export function GlobalOverlays() {
   const earnCoins = useEconomy((s) => s.earnCoins);
   const spendCoins = useEconomy((s) => s.spendCoins);
   const unlockMask = useEconomy((s) => s.unlockMask);
+  const addXp = useEconomy((s) => s.addXp);
 
   return (
     <>
@@ -34,7 +37,7 @@ export function GlobalOverlays() {
       <LogSightingOverlay />
       <MiniGamesHub />
       <GearLocker visible={screen === "gear"} onClose={close} />
-      <CoinRushOverlay visible={screen === "coinRush"} gear={gear} onClose={close} onEarnCoins={earnCoins} />
+      <CoinRushOverlay visible={screen === "coinRush"} gear={gear} onClose={close} onEarnCoins={earnCoins} onAddXp={addXp} />
       <LuckyReelsOverlay
         visible={screen === "luckyReels"}
         coins={coins}
@@ -50,7 +53,10 @@ export function GlobalOverlays() {
         onClose={close}
         onSpendCoins={spendCoins}
         onEarnCoins={earnCoins}
+        onAddXp={addXp}
       />
+      <WheelOfTides />
+      <ScratchTheSand />
       <CoinShop visible={screen === "coinShop"} onClose={close} onToast={showToast} />
       <GlobalToast />
     </>
