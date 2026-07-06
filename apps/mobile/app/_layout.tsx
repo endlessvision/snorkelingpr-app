@@ -2,16 +2,22 @@ import { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useAppFonts } from "@/theme/fonts";
 import { SplashOverlay } from "@/components/SplashOverlay";
 import { Text } from "@/components/Text";
 import { initEconomyPersistence } from "@/store/persistence";
+import { useEconomy } from "@/store/useEconomy";
 import { RankUpToast } from "@/features/tiers/RankUpToast";
 import { GlobalOverlays } from "@/features/overlays/GlobalOverlays";
 
+// Module-level so a one-time boot redirect survives any root re-mount (guards
+// against a navigation update loop).
+let didLand = false;
+
 export default function RootLayout() {
+  const router = useRouter();
   const [fontsLoaded] = useAppFonts();
   const [showSplash, setShowSplash] = useState(true);
   const hideSplash = useCallback(() => setShowSplash(false), []);
@@ -20,6 +26,21 @@ export default function RootLayout() {
   // Load the saved economy while the ~2.8s splash plays.
   useEffect(() => {
     void initEconomyPersistence();
+  }, []);
+
+  // Once the saved state loads, land on onboarding (first run) or the boat Home,
+  // exactly once. Subscribes imperatively so it never re-runs per render.
+  useEffect(() => {
+    if (didLand) return;
+    const land = (s: { hydrated: boolean; onboarded: boolean }) => {
+      if (!s.hydrated || didLand) return;
+      didLand = true;
+      router.replace(s.onboarded ? "/home" : "/onboarding");
+    };
+    land(useEconomy.getState());
+    const unsub = useEconomy.subscribe(land);
+    return unsub;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!fontsLoaded) {

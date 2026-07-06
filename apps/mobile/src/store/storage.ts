@@ -32,6 +32,7 @@ function pickDomain(state: EconomyState): EconomyState {
     freeSpins: state.freeSpins,
     raffle: state.raffle,
     muted: state.muted,
+    onboarded: state.onboarded,
   };
 }
 

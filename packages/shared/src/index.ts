@@ -112,6 +112,8 @@ export interface EconomyState {
   raffle: Raffle;
   /** Sound muted toggle (Phase 5). */
   muted: boolean;
+  /** Whether the first-run onboarding has been completed (Phase 10). */
+  onboarded: boolean;
 }
 
 export const DEFAULT_ECONOMY: EconomyState = {
@@ -128,6 +130,7 @@ export const DEFAULT_ECONOMY: EconomyState = {
   freeSpins: 0,
   raffle: { month: "", entries: 0 },
   muted: false,
+  onboarded: false,
 };
 
 // ===== Static catalogs (ported from Snorkeling Dive.dc.html) =====

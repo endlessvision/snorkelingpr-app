@@ -60,6 +60,8 @@ interface EconomyActions {
   addRaffleEntries: (n: number) => void;
   /** Toggle the muted flag (Phase 5). */
   toggleMuted: () => void;
+  /** Mark first-run onboarding complete (Phase 10). */
+  setOnboarded: () => void;
 
   /** Replace the whole economy — used by the persistence layer on load (Phase 7). */
   hydrate: (state: Partial<EconomyState>) => void;
@@ -170,6 +172,8 @@ export const useEconomy = create<EconomyStore>((set, get) => ({
     }),
 
   toggleMuted: () => set((s) => ({ muted: !s.muted })),
+
+  setOnboarded: () => set({ onboarded: true }),
 
   grantRedemption: (key) => {
     if (get().redeemedShopItems.includes(key)) return false;
