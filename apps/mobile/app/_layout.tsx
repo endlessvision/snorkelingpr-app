@@ -8,6 +8,7 @@ import { useAppFonts } from "@/theme/fonts";
 import { SplashOverlay } from "@/components/SplashOverlay";
 import { Text } from "@/components/Text";
 import { initEconomyPersistence } from "@/store/persistence";
+import { RankUpToast } from "@/features/tiers/RankUpToast";
 
 export default function RootLayout() {
   const [fontsLoaded] = useAppFonts();
@@ -30,6 +31,7 @@ export default function RootLayout() {
         <StatusBar style="light" />
         <View style={styles.root}>
           <Stack screenOptions={{ headerShown: false }} />
+          <RankUpToast />
           {showSplash && <SplashOverlay onDone={hideSplash} />}
           {__DEV__ && !showSplash && (
             <Pressable onPress={replay} style={[styles.devReplay, styles.devReplayInner]} hitSlop={10}>

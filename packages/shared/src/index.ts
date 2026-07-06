@@ -212,3 +212,46 @@ export function depthZoneForFt(ft: number): DepthZoneName {
   if (ft < 195) return "Deep Blue";
   return "The Abyss";
 }
+
+// ===== Diver status tiers (Phase 3) =====
+
+export interface DiverTier {
+  icon: string;
+  name: string;
+  /** Lifetime XP needed to reach this tier. */
+  xp: number;
+  tag: string;
+  perk: string;
+  color: string;
+  glow: string;
+}
+
+/** Ported from tierDefs() in Snorkeling Dive.dc.html. */
+export const DIVER_TIERS: DiverTier[] = [
+  { icon: "🤿", name: "Snorkeler", xp: 0, tag: "Everyone starts at the surface", perk: "Welcome aboard — start logging sea life to rank up", color: "#7fe6ef", glow: "rgba(127,230,239,.35)" },
+  { icon: "🐠", name: "Reef Guardian", xp: 120, tag: "The reef knows your name", perk: "+1 free raffle ticket every month · exclusive fin color", color: "#16c0d8", glow: "rgba(22,192,216,.4)" },
+  { icon: "🌊", name: "Deep Explorer", xp: 350, tag: "You belong to the deep", perk: "+2 free raffle tickets monthly · exclusive gear set · early access to events", color: "#ffd23f", glow: "rgba(255,210,63,.4)" },
+  { icon: "⚓", name: "Honorary Captain", xp: 800, tag: "The crew salutes you", perk: "Priority boarding on real tours · captain's flag · your name on the boat leaderboard", color: "#ff2e93", glow: "rgba(255,46,147,.4)" },
+];
+
+/** Index of the highest tier whose XP threshold is met. */
+export function tierIndexFor(xp: number): number {
+  let i = 0;
+  for (let k = 0; k < DIVER_TIERS.length; k++) if (xp >= DIVER_TIERS[k].xp) i = k;
+  return i;
+}
+
+/** Percent progress (4–100) toward the next tier; 100 at max rank. */
+export function tierProgressPct(xp: number): number {
+  const i = tierIndexFor(xp);
+  if (i >= DIVER_TIERS.length - 1) return 100;
+  const lo = DIVER_TIERS[i].xp;
+  const hi = DIVER_TIERS[i + 1].xp;
+  return Math.max(4, Math.min(100, Math.round(((xp - lo) / (hi - lo)) * 100)));
+}
+
+/** XP remaining to the next tier; 0 at max rank. */
+export function xpToNextTier(xp: number): number {
+  const i = tierIndexFor(xp);
+  return i < DIVER_TIERS.length - 1 ? DIVER_TIERS[i + 1].xp - xp : 0;
+}

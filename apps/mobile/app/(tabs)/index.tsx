@@ -21,6 +21,8 @@ import { useEconomy } from "@/store/useEconomy";
 import { coinBubbleValue } from "@/features/gear/perks";
 import { OceanWorld, WORLD_HEIGHT, WORLD_WIDTH } from "@/features/dive/OceanWorld";
 import { DepthGauge } from "@/features/dive/DepthGauge";
+import { TierBadge } from "@/features/tiers/TierBadge";
+import { TierOverlay } from "@/features/tiers/TierOverlay";
 import { RedeemSheet } from "@/features/redeem/RedeemSheet";
 import { CoinShop } from "@/features/redeem/CoinShop";
 import { GearLocker } from "@/features/gear/GearLocker";
@@ -63,6 +65,7 @@ export default function DiveScreen() {
   const [coinRushOpen, setCoinRushOpen] = useState(false);
   const [reelsOpen, setReelsOpen] = useState(false);
   const [depthGambleOpen, setDepthGambleOpen] = useState(false);
+  const [tierOpen, setTierOpen] = useState(false);
   const [ft, setFt] = useState(0);
   const [zone, setZone] = useState<DepthZoneName>("Surface");
 
@@ -200,12 +203,16 @@ export default function DiveScreen() {
             </Pressable>
           </View>
 
-          <Pressable onPress={() => setCoinRushOpen(true)} style={[styles.pillBtn, { top: 100 }]}>
+          <View style={styles.tierBadgeWrap}>
+            <TierBadge onPress={() => setTierOpen(true)} />
+          </View>
+
+          <Pressable onPress={() => setCoinRushOpen(true)} style={[styles.pillBtn, { top: 156 }]}>
             <Text style={styles.pillBtnLabel} color="#ffe58a">
               ⚡ Coin Rush
             </Text>
           </Pressable>
-          <Pressable onPress={() => setGearOpen(true)} style={[styles.pillBtn, { top: 140 }]}>
+          <Pressable onPress={() => setGearOpen(true)} style={[styles.pillBtn, { top: 200 }]}>
             <Text style={styles.pillBtnLabel} color="#bfefff">
               🤿 Gear
             </Text>
@@ -236,6 +243,7 @@ export default function DiveScreen() {
 
       <CoinShop visible={shopOpen} onClose={() => setShopOpen(false)} onToast={showToast} />
       <GearLocker visible={gearOpen} onClose={() => setGearOpen(false)} />
+      <TierOverlay visible={tierOpen} onClose={() => setTierOpen(false)} />
 
       <CoinRushOverlay
         visible={coinRushOpen}
@@ -291,6 +299,11 @@ const styles = StyleSheet.create({
     borderRadius: 100,
   },
   redeemLabel: { fontFamily: fontLabel.extraBold, fontSize: 13, color: "#fff" },
+  tierBadgeWrap: {
+    position: "absolute",
+    top: 104,
+    left: 16,
+  },
   pillBtn: {
     position: "absolute",
     left: 16,

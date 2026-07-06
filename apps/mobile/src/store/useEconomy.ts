@@ -7,6 +7,7 @@ import {
   MaskId,
   SHOP_ITEM_DEFS,
   Streak,
+  tierIndexFor,
 } from "@snorkeling/shared";
 import { currentMonthKey, currentWeekKey } from "@/lib/periods";
 
@@ -21,8 +22,13 @@ interface EconomyActions {
   /** Returns false (and does nothing) if the balance can't cover it. */
   spendCoins: (amount: number) => boolean;
 
+  /** Transient: the tier index just reached, if addXp crossed a threshold. UI
+   *  shows a rank-up toast then calls clearRankUp(). */
+  rankUp: number | null;
+  clearRankUp: () => void;
+
   /** Add XP to lifetime `xp` AND the current week's `weekXp` (rolls over on a new
-   *  ISO week). Tier-up handling lands in Phase 3. */
+   *  ISO week). Sets `rankUp` when a tier threshold is crossed. */
   addXp: (amount: number) => void;
 
   /** Grant free Lucky Reels spins (Phase 4). */
@@ -69,13 +75,19 @@ export const useEconomy = create<EconomyStore>((set, get) => ({
     return true;
   },
 
+  rankUp: null,
+  clearRankUp: () => set({ rankUp: null }),
+
   addXp: (amount) =>
     set((s) => {
       const n = Math.max(0, Math.round(amount));
+      const nextXp = s.xp + n;
       const week = currentWeekKey();
       const weekXp =
         s.weekXp.week === week ? { week, xp: s.weekXp.xp + n } : { week, xp: n };
-      return { xp: s.xp + n, weekXp };
+      const before = tierIndexFor(s.xp);
+      const after = tierIndexFor(nextXp);
+      return { xp: nextXp, weekXp, rankUp: after > before ? after : s.rankUp };
     }),
 
   grantFreeSpin: (n = 1) =>
