@@ -29,3 +29,18 @@ export function currentWeekKey(now: Date = new Date()): string {
 export function currentMonthKey(now: Date = new Date()): string {
   return `${now.getFullYear()}-${now.getMonth() + 1}`;
 }
+
+/** Local calendar day, "YYYY-MM-DD" (used for the daily streak). */
+export function dateKey(now: Date = new Date()): string {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** True if `prev` (a dateKey) is exactly the calendar day before `now`. */
+export function isYesterday(prev: string, now: Date = new Date()): boolean {
+  const y = new Date(now);
+  y.setDate(y.getDate() - 1);
+  return prev === dateKey(y);
+}

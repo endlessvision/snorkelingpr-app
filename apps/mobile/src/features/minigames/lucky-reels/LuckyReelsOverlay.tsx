@@ -9,6 +9,8 @@ import { Button } from "@/components/Button";
 import { CoinPill } from "@/components/CoinPill";
 import { fontDisplay, fontLabel } from "@/theme/fonts";
 import { gearColor } from "@/theme/tokens";
+import { useEconomy } from "@/store/useEconomy";
+import { playSound } from "@/lib/sound";
 
 type ReelSymbol = "coin" | "fish" | "explorer" | "fortune" | "voyager";
 
@@ -79,6 +81,9 @@ export function LuckyReelsOverlay({
   onEarnCoins,
   onUnlockMask,
 }: Props) {
+  const freeSpins = useEconomy((s) => s.freeSpins);
+  const consumeFreeSpin = useEconomy((s) => s.consumeFreeSpin);
+
   const [reels, setReels] = useState<[ReelSymbol, ReelSymbol, ReelSymbol]>(["coin", "fish", "coin"]);
   const [spinning, setSpinning] = useState(false);
   const [message, setMessage] = useState("");
@@ -96,12 +101,18 @@ export function LuckyReelsOverlay({
 
   const spin = useCallback(() => {
     if (spinning) return;
-    if (coins < SPIN_COST) {
+    // A queued free spin (from the daily streak) is used before charging coins.
+    const useFree = freeSpins > 0;
+    if (useFree) {
+      consumeFreeSpin();
+    } else if (coins < SPIN_COST) {
       setMessage("Not enough coins — go dive!");
       return;
+    } else if (!onSpendCoins(SPIN_COST)) {
+      return;
     }
-    if (!onSpendCoins(SPIN_COST)) return;
 
+    playSound("spin");
     const outcome = decideOutcome(ownedMasks);
     setSpinning(true);
     setMessage("");
@@ -141,9 +152,10 @@ export function LuckyReelsOverlay({
         return next;
       });
     }, 80);
-  }, [spinning, coins, onSpendCoins, ownedMasks, stopAll, onEarnCoins, onUnlockMask]);
+  }, [spinning, coins, freeSpins, consumeFreeSpin, onSpendCoins, ownedMasks, stopAll, onEarnCoins, onUnlockMask]);
 
-  const canAfford = coins >= SPIN_COST && !spinning;
+  const canSpin = !spinning && (freeSpins > 0 || coins >= SPIN_COST);
+  const spinLabel = spinning ? "Spinning…" : freeSpins > 0 ? "Free spin 🎁" : `Spin · ${SPIN_COST}`;
 
   return (
     <Modal visible={visible} animationType="slide" transparent statusBarTranslucent>
@@ -171,12 +183,7 @@ export function LuckyReelsOverlay({
           ))}
         </View>
         <Text style={styles.message}>{message}</Text>
-        <Button
-          label={spinning ? "Spinning…" : `Spin · ${SPIN_COST}`}
-          onPress={spin}
-          disabled={!canAfford}
-          variant="primary"
-        />
+        <Button label={spinLabel} onPress={spin} disabled={!canSpin} variant="primary" />
       </View>
 
       <View style={styles.maskList}>

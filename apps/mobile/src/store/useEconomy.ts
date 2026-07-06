@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import {
+  DAILY_CLAIM_XP,
+  DAILY_REWARDS,
   DEFAULT_ECONOMY,
   EconomyState,
   GearCategory,
@@ -9,7 +11,7 @@ import {
   Streak,
   tierIndexFor,
 } from "@snorkeling/shared";
-import { currentMonthKey, currentWeekKey } from "@/lib/periods";
+import { currentMonthKey, currentWeekKey, dateKey, isYesterday } from "@/lib/periods";
 
 export type RedeemResult = "ok" | "insufficient" | "already";
 
@@ -49,6 +51,9 @@ interface EconomyActions {
 
   /** Set the daily streak (Phase 4). */
   setStreak: (streak: Streak) => void;
+  /** Claim today's Daily Dive reward: coins + free spin + XP. No-op if already
+   *  claimed today. Returns the day/reward so the UI can celebrate. */
+  claimDaily: () => { ok: boolean; day: number; reward: number };
   /** Add raffle entries for the current month, rolling over on a new month (Phase 8). */
   addRaffleEntries: (n: number) => void;
   /** Toggle the muted flag (Phase 5). */
@@ -138,6 +143,21 @@ export const useEconomy = create<EconomyStore>((set, get) => ({
   },
 
   setStreak: (streak) => set({ streak }),
+
+  claimDaily: () => {
+    const s = get();
+    const today = dateKey();
+    if (s.streak.last === today) return { ok: false, day: s.streak.count, reward: 0 };
+    const day = isYesterday(s.streak.last) ? s.streak.count + 1 : 1;
+    const reward = DAILY_REWARDS[Math.min(day - 1, DAILY_REWARDS.length - 1)];
+    set((st) => ({
+      streak: { count: day, last: today },
+      coins: st.coins + reward,
+      freeSpins: st.freeSpins + 1,
+    }));
+    get().addXp(DAILY_CLAIM_XP);
+    return { ok: true, day, reward };
+  },
 
   addRaffleEntries: (n) =>
     set((s) => {

@@ -255,3 +255,11 @@ export function xpToNextTier(xp: number): number {
   const i = tierIndexFor(xp);
   return i < DIVER_TIERS.length - 1 ? DIVER_TIERS[i + 1].xp - xp : 0;
 }
+
+// ===== Daily streak (Phase 4) =====
+
+/** Coin reward for streak day 1..7 (index 0..6). Each claim also gives +1 free spin + 15 XP. */
+export const DAILY_REWARDS = [5, 10, 15, 20, 30, 40, 60];
+
+/** XP granted per daily claim. */
+export const DAILY_CLAIM_XP = 15;
