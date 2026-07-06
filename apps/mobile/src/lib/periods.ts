@@ -44,3 +44,27 @@ export function isYesterday(prev: string, now: Date = new Date()): boolean {
   y.setDate(y.getDate() - 1);
   return prev === dateKey(y);
 }
+
+/** The raffle draw: last day of the current month at 20:00 local (Phase 8). */
+export function raffleDrawDate(now: Date = new Date()): Date {
+  // Day 0 of next month = last day of this month.
+  return new Date(now.getFullYear(), now.getMonth() + 1, 0, 20, 0, 0, 0);
+}
+
+/** The weekly leaderboard reset: upcoming Sunday 23:59 local (Phase 9). */
+export function weekResetDate(now: Date = new Date()): Date {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 0, 0);
+  const day = d.getDay(); // 0 = Sunday
+  const daysUntilSunday = (7 - day) % 7;
+  d.setDate(d.getDate() + daysUntilSunday);
+  return d;
+}
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+export function monthName(now: Date = new Date()): string {
+  return MONTH_NAMES[now.getMonth()];
+}

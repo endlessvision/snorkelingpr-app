@@ -9,6 +9,8 @@ import { LuckyReelsOverlay } from "@/features/minigames/lucky-reels/LuckyReelsOv
 import { DepthGambleOverlay } from "@/features/minigames/depth-gamble/DepthGambleOverlay";
 import { WheelOfTides } from "@/features/minigames/wheel/WheelOfTides";
 import { ScratchTheSand } from "@/features/minigames/scratch/ScratchTheSand";
+import { RaffleOverlay } from "@/features/raffle/RaffleOverlay";
+import { LeaderboardOverlay } from "@/features/leaderboard/LeaderboardOverlay";
 import { CoinShop } from "@/features/redeem/CoinShop";
 import { GlobalToast } from "./GlobalToast";
 
@@ -57,6 +59,8 @@ export function GlobalOverlays() {
       />
       <WheelOfTides />
       <ScratchTheSand />
+      <RaffleOverlay />
+      <LeaderboardOverlay />
       <CoinShop visible={screen === "coinShop"} onClose={close} onToast={showToast} />
       <GlobalToast />
     </>

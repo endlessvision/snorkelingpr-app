@@ -17,8 +17,9 @@ interface Props {
 }
 
 const ROWS = [
-  { key: "reels", emoji: "🎰", title: "Lucky Reels", desc: "Spin for a diver's mask that boosts your dives", colors: ["#7b52c9", "#ff2e93"] },
-  { key: "depth", emoji: "🎲", title: "Depth Gamble", desc: "Bet coins, dive deep, cash out before the deep takes it", colors: ["#0a6389", "#16c0d8"] },
+  { key: "games", emoji: "🎮", title: "Mini Games", desc: "5 ways to win coins, gear & prizes", colors: ["#7b52c9", "#16c0d8"] },
+  { key: "raffle", emoji: "🏆", title: "Free Tour Raffle", desc: "Win a tour for 2 · one winner every month", colors: ["#0a4f70", "#16c0d8"] },
+  { key: "board", emoji: "🏅", title: "Weekly Leaderboard", desc: "Top divers win bonus tickets · resets Sunday", colors: ["#5a2ea6", "#c05cff"] },
   { key: "shop", emoji: "🛍️", title: "Coin Shop", desc: "Trade coins for real perks & rewards", colors: ["#f4b62e", "#ff8a3d"] },
 ] as const;
 
@@ -82,8 +83,9 @@ export function RedeemSheet({ visible, coins, onClose }: Props) {
               key={row.key}
               onPress={() => {
                 onClose();
-                if (row.key === "reels") openScreen("luckyReels");
-                else if (row.key === "depth") openScreen("depthGamble");
+                if (row.key === "games") openScreen("miniGames");
+                else if (row.key === "raffle") openScreen("raffle");
+                else if (row.key === "board") openScreen("leaderboard");
                 else openScreen("coinShop");
               }}
             >
@@ -98,7 +100,7 @@ export function RedeemSheet({ visible, coins, onClose }: Props) {
                   <Text style={styles.rowTitle}>{row.title}</Text>
                   <Text style={styles.rowDesc}>{row.desc}</Text>
                 </View>
-                {row.key === "reels" && freeSpins > 0 && (
+                {row.key === "games" && freeSpins > 0 && (
                   <View style={styles.freeBadge}>
                     <Text style={styles.freeBadgeText}>🎁 FREE</Text>
                   </View>
