@@ -173,6 +173,19 @@ export const COIN_BUBBLE_DEFS: CoinBubbleDef[] = [
   { id: "c11", left: 560, top: 3820, value: 50 },
 ];
 
+/** Gem (XP) bubbles — award XP, not coins. Interleaved with coins down the depth. */
+export const GEM_BUBBLE_DEFS: CoinBubbleDef[] = [
+  { id: "g1", left: 430, top: 460, value: 10 },
+  { id: "g2", left: 760, top: 780, value: 10 },
+  { id: "g3", left: 210, top: 1240, value: 15 },
+  { id: "g4", left: 640, top: 1700, value: 15 },
+  { id: "g5", left: 350, top: 2180, value: 20 },
+  { id: "g6", left: 880, top: 2520, value: 20 },
+  { id: "g7", left: 180, top: 2980, value: 25 },
+  { id: "g8", left: 690, top: 3360, value: 30 },
+  { id: "g9", left: 400, top: 3720, value: 40 },
+];
+
 export const SHOP_ITEM_DEFS: ShopItemDef[] = [
   { key: "reef-guardian-pin", name: "Reef Guardian pin", desc: "Enamel collector pin", cost: 20, icon: "📛" },
   { key: "welcome-cocktail", name: "Welcome cocktail", desc: "On the house at the dock", cost: 35, icon: "🍹" },

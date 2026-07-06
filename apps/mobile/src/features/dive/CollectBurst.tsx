@@ -4,15 +4,18 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from "
 import { Text } from "@/components/Text";
 import { fontDisplay } from "@/theme/fonts";
 
+export type BurstKind = "coin" | "xp";
+
 interface Props {
   left: number;
   top: number;
   value: number;
+  kind?: BurstKind;
   onDone: () => void;
 }
 
-/** The "+N coins" pop-and-rise FX — ports @keyframes dvPop. */
-export function CollectBurst({ left, top, value, onDone }: Props) {
+/** The "+N coins" / "+N XP" pop-and-rise FX — ports @keyframes dvPop. */
+export function CollectBurst({ left, top, value, kind = "coin", onDone }: Props) {
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -27,9 +30,13 @@ export function CollectBurst({ left, top, value, onDone }: Props) {
     transform: [{ scale: 1 + progress.value * 1.1 }, { translateY: -progress.value * 26 }],
   }));
 
+  const isXp = kind === "xp";
+
   return (
     <Animated.View pointerEvents="none" style={[styles.wrap, { left, top }, style]}>
-      <Text style={styles.text}>+{value} 🪙</Text>
+      <Text style={[styles.text, { color: isXp ? "#7fe6ef" : "#ffe58a" }]}>
+        +{value}{isXp ? " XP ✨" : " 🪙"}
+      </Text>
     </Animated.View>
   );
 }
@@ -39,7 +46,6 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: fontDisplay.bold,
     fontSize: 18,
-    color: "#ffe58a",
     textShadowColor: "rgba(0,0,0,0.4)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,

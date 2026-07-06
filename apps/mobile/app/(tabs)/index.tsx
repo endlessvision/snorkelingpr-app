@@ -11,7 +11,8 @@ import Animated, {
   withDelay,
   withTiming,
 } from "react-native-reanimated";
-import { COIN_BUBBLE_DEFS, depthZoneForFt, DepthZoneName } from "@snorkeling/shared";
+import { COIN_BUBBLE_DEFS, GEM_BUBBLE_DEFS, depthZoneForFt, DepthZoneName } from "@snorkeling/shared";
+import { BurstKind } from "@/features/dive/CollectBurst";
 import { HomeReveal } from "@/components/HomeReveal";
 import { CoinPill } from "@/components/CoinPill";
 import { Text } from "@/components/Text";
@@ -32,6 +33,7 @@ interface Burst {
   left: number;
   top: number;
   value: number;
+  kind: BurstKind;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -44,10 +46,13 @@ export default function DiveScreen() {
   const gear = useEconomy((s) => s.gear);
   const masks = useEconomy((s) => s.masks);
   const collectedList = useEconomy((s) => s.collectedCoinBubbles);
+  const poppedGemsList = useEconomy((s) => s.poppedGems);
   const earnCoins = useEconomy((s) => s.earnCoins);
+  const addXp = useEconomy((s) => s.addXp);
   const spendCoins = useEconomy((s) => s.spendCoins);
   const unlockMask = useEconomy((s) => s.unlockMask);
   const collectCoinBubble = useEconomy((s) => s.collectCoinBubble);
+  const popGem = useEconomy((s) => s.popGem);
 
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
   const [bursts, setBursts] = useState<Burst[]>([]);
@@ -62,6 +67,7 @@ export default function DiveScreen() {
   const [zone, setZone] = useState<DepthZoneName>("Surface");
 
   const collected = useCollectedMap(collectedList);
+  const poppedGems = useCollectedMap(poppedGemsList);
 
   const burstIdRef = useRef(0);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -142,10 +148,23 @@ export default function DiveScreen() {
       collectCoinBubble(id);
       earnCoins(value);
       const burstId = ++burstIdRef.current;
-      setBursts((prev) => [...prev, { id: burstId, left, top, value }]);
+      setBursts((prev) => [...prev, { id: burstId, left, top, value, kind: "coin" }]);
       showToast(`+${value} coins collected!`);
     },
     [gear, collectCoinBubble, earnCoins, showToast],
+  );
+
+  const handleCollectGem = useCallback(
+    (id: string, left: number, top: number, _value: number) => {
+      const def = GEM_BUBBLE_DEFS.find((g) => g.id === id);
+      if (!def) return;
+      popGem(id);
+      addXp(def.value);
+      const burstId = ++burstIdRef.current;
+      setBursts((prev) => [...prev, { id: burstId, left, top, value: def.value, kind: "xp" }]);
+      showToast(`+${def.value} XP ✨`);
+    },
+    [popGem, addXp, showToast],
   );
 
   const handleBurstDone = useCallback((id: number) => {
@@ -162,6 +181,8 @@ export default function DiveScreen() {
                 <OceanWorld
                   collected={collected}
                   onCollect={handleCollect}
+                  poppedGems={poppedGems}
+                  onCollectGem={handleCollectGem}
                   bursts={bursts}
                   onBurstDone={handleBurstDone}
                 />

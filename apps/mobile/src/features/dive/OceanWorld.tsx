@@ -1,13 +1,14 @@
 import { StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { COIN_BUBBLE_DEFS } from "@snorkeling/shared";
+import { COIN_BUBBLE_DEFS, GEM_BUBBLE_DEFS } from "@snorkeling/shared";
 import { diveOceanGradient } from "@/theme/tokens";
 import { Bubble } from "@/components/Bubble";
 import { SunRay } from "./SunRay";
 import { BiolumDot } from "./BiolumDot";
 import { Drift } from "./Drift";
 import { CoinBubbleView } from "./CoinBubbleView";
-import { CollectBurst } from "./CollectBurst";
+import { GemBubbleView } from "./GemBubbleView";
+import { BurstKind, CollectBurst } from "./CollectBurst";
 import { LongFish } from "./creatures/LongFish";
 import { RoundFish } from "./creatures/RoundFish";
 import { AngelFish } from "./creatures/AngelFish";
@@ -31,17 +32,20 @@ interface Burst {
   left: number;
   top: number;
   value: number;
+  kind: BurstKind;
 }
 
 interface Props {
   collected: Record<string, boolean>;
   onCollect: (id: string, left: number, top: number, value: number) => void;
+  poppedGems: Record<string, boolean>;
+  onCollectGem: (id: string, left: number, top: number, value: number) => void;
   bursts: Burst[];
   onBurstDone: (id: number) => void;
 }
 
 /** The full pannable 1120x4200 underwater world — ports Snorkeling Dive.dc.html. */
-export function OceanWorld({ collected, onCollect, bursts, onBurstDone }: Props) {
+export function OceanWorld({ collected, onCollect, poppedGems, onCollectGem, bursts, onBurstDone }: Props) {
   return (
     <LinearGradient
       colors={diveOceanGradient.colors as [string, string, ...string[]]}
@@ -184,9 +188,20 @@ export function OceanWorld({ collected, onCollect, bursts, onBurstDone }: Props)
         />
       ))}
 
+      {/* gem (XP) bubbles */}
+      {GEM_BUBBLE_DEFS.filter((g) => !poppedGems[g.id]).map((g) => (
+        <GemBubbleView
+          key={g.id}
+          left={g.left}
+          top={g.top}
+          value={g.value}
+          onCollect={() => onCollectGem(g.id, g.left - 4, g.top - 6, g.value)}
+        />
+      ))}
+
       {/* collect bursts */}
       {bursts.map((b) => (
-        <CollectBurst key={b.id} left={b.left} top={b.top} value={b.value} onDone={() => onBurstDone(b.id)} />
+        <CollectBurst key={b.id} left={b.left} top={b.top} value={b.value} kind={b.kind} onDone={() => onBurstDone(b.id)} />
       ))}
     </LinearGradient>
   );
